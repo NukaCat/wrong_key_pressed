@@ -72,17 +72,30 @@ pub fn build(b: *std.Build) !void {
     free_type.installHeadersDirectory(b.path("lib/freetype-2.13.2/include"), "", .{});
     free_type.linkLibC();
 
+    const glew = b.addStaticLibrary(.{
+        .name = "glew",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    glew.addIncludePath(b.path("lib/glew-2.1.0/include"));
+    glew.installHeadersDirectory(b.path("lib/glew-2.1.0/include"), "", .{});
+    glew.linkLibC();
+    glew.addCSourceFiles(.{
+        .root = b.path("lib/glew-2.1.0/src"),
+        .files = &.{
+            "glew.c",
+        },
+    });
+
     exe.addIncludePath(b.path("lib/SDL/include"));
     exe.addLibraryPath(b.path("lib/SDL/build/Release"));
     exe.linkSystemLibrary("SDL3");
 
-    exe.addIncludePath(b.path("lib/glew-2.1.0/include"));
-    exe.addLibraryPath(b.path("lib/glew-2.1.0/lib/Release/x64"));
-    exe.linkSystemLibrary("glew32");
-
     exe.linkSystemLibrary("OpenGL32");
 
     exe.linkLibrary(free_type);
+    exe.linkLibrary(glew);
 
     exe.linkLibC();
     b.installArtifact(exe);
@@ -93,7 +106,6 @@ pub fn build(b: *std.Build) !void {
     }
 
     b.installFile("lib/SDL/build/Release/SDL3.dll", "bin/SDL3.dll");
-    b.installFile("lib/glew-2.1.0/bin/Release/x64/glew32.dll", "bin/glew32.dll");
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
