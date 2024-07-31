@@ -88,6 +88,44 @@ pub fn build(b: *std.Build) !void {
         },
     });
 
+    const glfw = b.addStaticLibrary(.{
+        .name = "glfw",
+        .target = target,
+        .optimize = optimize,
+    });
+
+    glfw.addIncludePath(b.path("lib/glfw-3.4/include"));
+    glfw.installHeadersDirectory(b.path("lib/glfw-3.4/include"), "", .{});
+    glfw.linkLibC();
+    glfw.linkSystemLibrary("gdi32");
+    glfw.addCSourceFiles(.{
+        .root = b.path("lib/glfw-3.4/src"),
+        .flags = &.{"-D_GLFW_WIN32"},
+        .files = &.{
+            "context.c",
+            "init.c",
+            "input.c",
+            "monitor.c",
+            "platform.c",
+            "vulkan.c",
+            "window.c",
+            "egl_context.c",
+            "osmesa_context.c",
+            "null_init.c",
+            "null_monitor.c",
+            "null_window.c",
+            "null_joystick.c",
+            "win32_thread.c",
+            "win32_time.c",
+            "win32_init.c",
+            "win32_module.c",
+            "win32_window.c",
+            "win32_monitor.c",
+            "win32_joystick.c",
+            "wgl_context.c",
+        },
+    });
+
     exe.addIncludePath(b.path("lib/SDL/include"));
     exe.addLibraryPath(b.path("lib/SDL/build/Release"));
     exe.linkSystemLibrary("SDL3");
@@ -96,6 +134,7 @@ pub fn build(b: *std.Build) !void {
 
     exe.linkLibrary(free_type);
     exe.linkLibrary(glew);
+    exe.linkLibrary(glfw);
 
     exe.linkLibC();
     b.installArtifact(exe);

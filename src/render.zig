@@ -10,6 +10,8 @@ const FontMng = @import("font_mng.zig");
 
 const Render = @This();
 
+const check_gl_err = common.check_gl_err;
+
 shader_program: u32 = undefined,
 rect_vao: u32 = undefined,
 font_mng: FontMng = undefined,
@@ -81,7 +83,10 @@ fn generate_rect_vao() !u32 {
 }
 
 pub fn init() !Render {
-    if (gl.glewInit() != gl.GLEW_OK) {
+    const err = gl.glewInit();
+    if (err != gl.GLEW_OK) {
+        const err_str = gl.glewGetErrorString(err);
+        std.debug.print("glew init error {s}\n", .{err_str});
         return error.GlGlewInitError;
     }
     //gl.glEnable(gl.GL_DEPTH_TEST);
@@ -116,14 +121,6 @@ pub fn init() !Render {
 pub fn deinit(self: *Render) void {
     self.glyph_mng.deinit();
     gl.glewShutdown();
-}
-
-fn check_gl_err() void {
-    const err = gl.glGetError();
-    if (err != gl.GL_NO_ERROR) {
-        std.debug.print("gl error {}\n", .{err});
-        unreachable;
-    }
 }
 
 pub fn start_frame(self: *Render, width: u32, height: u32) void {

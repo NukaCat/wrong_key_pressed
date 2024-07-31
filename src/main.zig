@@ -1,56 +1,46 @@
 const std = @import("std");
 
-const sdl = @cImport({
-    @cInclude("SDL3/sdl.h");
-});
-
 const gl = @cImport({
     @cInclude("GL/glew.h");
     @cInclude("GL/gl.h");
+    @cInclude("GLFW/glfw3.h");
 });
 
 const common = @import("common.zig");
 const render = @import("render.zig");
 
-pub fn main() !void {
-    const result = sdl.SDL_Init(sdl.SDL_INIT_VIDEO | sdl.SDL_WINDOW_OPENGL);
-    if (result != 0) {
-        return error.SDLInitFailed;
-    }
-    defer sdl.SDL_Quit();
+pub fn glfw_error_callback(err: c_int, description: [*c]const u8) callconv(.C) void {
+    std.debug.print("GLFW Error: {} {s}\n", .{ err, description });
+}
 
+pub fn main() !void {
     const window_width = 1280;
     const window_height = 720;
 
-    const wind = sdl.SDL_CreateWindow("WKP", window_width, window_height, sdl.SDL_WINDOW_OPENGL);
-    defer sdl.SDL_DestroyWindow(wind);
+    _ = gl.glfwSetErrorCallback(glfw_error_callback);
 
-    const sdl_ctx = sdl.SDL_GL_CreateContext(wind);
-    if (sdl_ctx == null) {
-        return error.SDLCreateCtxFail;
+    const succes = gl.glfwInit();
+    if (succes == 0) {
+        return error.GlfwInitError;
     }
-    defer _ = sdl.SDL_GL_DeleteContext(sdl_ctx);
+    defer gl.glfwTerminate();
 
-    if (gl.glewInit() != gl.GLEW_OK) {
-        return error.GlGlewInitError;
+    const wind = gl.glfwCreateWindow(window_width, window_height, "WKP", null, null);
+    if (wind == null) {
+        return error.GlfwCreateWindowError;
     }
+    defer gl.glfwDestroyWindow(wind);
+
+    gl.glfwMakeContextCurrent(wind);
 
     var rend = try render.init();
 
-    while (true) {
-        var event: sdl.SDL_Event = undefined;
-        while (sdl.SDL_PollEvent(&event) != 0) {
-            if (event.type == sdl.SDL_EVENT_QUIT) {
-                return;
-            }
-        }
-
+    while (gl.glfwWindowShouldClose(wind) == 0) {
         rend.start_frame(window_width, window_height);
         rend.draw_text("Hello, World!", 100, 100, 24);
         rend.draw_text("Hello, Second!ggg", 100, 132, 24);
 
-        _ = sdl.SDL_GL_SwapWindow(wind);
-
-        sdl.SDL_Delay(16);
+        gl.glfwSwapBuffers(wind);
+        gl.glfwPollEvents();
     }
 }

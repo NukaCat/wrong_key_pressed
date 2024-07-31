@@ -11,6 +11,7 @@ const ft = @cImport({
 });
 
 const common = @import("common.zig");
+const check_gl_err = common.check_gl_err;
 
 const FontManager = @This();
 
@@ -100,6 +101,7 @@ pub fn get_glyph(self: *FontManager, char_code: u32, pixel_height: u32) Glyph {
 
     gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_LUMINANCE, @intCast(bitmap.width), @intCast(bitmap.rows), 0, gl.GL_LUMINANCE, gl.GL_UNSIGNED_BYTE, bitmap.buffer);
     gl.glBindTexture(gl.GL_TEXTURE_2D, 0);
+    check_gl_err();
 
     const ft_glyph = self.face.*.glyph;
 
