@@ -18,19 +18,10 @@ font_mng: FontMng = undefined,
 cur_width: u32 = 0,
 cur_height: u32 = 0,
 
-fn load_shader(path: []const u8, gl_type: gl.GLenum) !u32 {
-    var file = try std.fs.cwd().openFile(path, .{});
-    defer file.close();
-
-    var content = std.ArrayList(u8).init(common.allocator);
-    defer content.deinit();
-
-    try file.reader().readAllArrayList(&content, std.math.maxInt(usize));
-    content.append(0) catch unreachable;
-
+fn compile_shader(shader_str: []const u8, gl_type: gl.GLenum) !u32 {
     const shader = gl.__glewCreateShader.?(gl_type);
 
-    gl.__glewShaderSource.?(shader, 1, &@as([*c]u8, @ptrCast(@alignCast(content.items))), null);
+    gl.__glewShaderSource.?(shader, 1, &@as([*c]u8, @constCast(@alignCast(shader_str))), null);
     gl.__glewCompileShader.?(shader);
 
     var success: c_int = 0;
@@ -91,8 +82,11 @@ pub fn init() !Render {
     }
     //gl.glEnable(gl.GL_DEPTH_TEST);
 
-    const vertex_shader = try load_shader("shaders/shader.vert", gl.GL_VERTEX_SHADER);
-    const fragment_shader = try load_shader("shaders/shader.frag", gl.GL_FRAGMENT_SHADER);
+    const vertex_shader_str = @embedFile("shaders/shader.vert");
+    const fragment_shader_str = @embedFile("shaders/shader.frag");
+
+    const vertex_shader = try compile_shader(vertex_shader_str, gl.GL_VERTEX_SHADER);
+    const fragment_shader = try compile_shader(fragment_shader_str, gl.GL_FRAGMENT_SHADER);
 
     const shader_program = gl.__glewCreateProgram.?();
 
