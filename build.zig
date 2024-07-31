@@ -133,6 +133,8 @@ pub fn build(b: *std.Build) !void {
     exe.linkLibrary(glfw);
 
     exe.linkLibC();
+    exe.subsystem = .Windows;
+
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
