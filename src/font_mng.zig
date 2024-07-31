@@ -41,8 +41,10 @@ pub fn init() FontManager {
         unreachable;
     }
 
+    const font_data = @embedFile("fonts/consolas.ttf");
     var face: ft.FT_Face = undefined;
-    err = ft.FT_New_Face(ft_lib, "fonts/consolas.ttf", 0, @ptrCast(&face));
+
+    err = ft.FT_New_Memory_Face(ft_lib, font_data, @intCast(font_data.len), 0, @ptrCast(&face));
     if (err != 0) {
         unreachable;
     }
