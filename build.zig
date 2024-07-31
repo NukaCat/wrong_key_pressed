@@ -126,10 +126,6 @@ pub fn build(b: *std.Build) !void {
         },
     });
 
-    exe.addIncludePath(b.path("lib/SDL/include"));
-    exe.addLibraryPath(b.path("lib/SDL/build/Release"));
-    exe.linkSystemLibrary("SDL3");
-
     exe.linkSystemLibrary("OpenGL32");
 
     exe.linkLibrary(free_type);
@@ -143,8 +139,6 @@ pub fn build(b: *std.Build) !void {
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-
-    b.installFile("lib/SDL/build/Release/SDL3.dll", "bin/SDL3.dll");
 
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
