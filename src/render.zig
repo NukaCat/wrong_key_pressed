@@ -113,8 +113,7 @@ pub fn init() !Render {
 }
 
 pub fn deinit(self: *Render) void {
-    self.glyph_mng.deinit();
-    gl.glewShutdown();
+    self.font_mng.deinit();
 }
 
 pub fn start_frame(self: *Render, width: u32, height: u32) void {

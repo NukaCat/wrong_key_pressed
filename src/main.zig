@@ -1,46 +1,40 @@
 const std = @import("std");
+const io = @import("io.zig");
 
-const gl = @cImport({
-    @cInclude("GL/glew.h");
-    @cInclude("GL/gl.h");
-    @cInclude("GLFW/glfw3.h");
-});
+const Renderer = @import("render.zig");
+const Editor = @import("editor.zig");
 
-const common = @import("common.zig");
-const render = @import("render.zig");
+pub fn draw_editor(render: *Renderer, editor: Editor, _: u31, height: u31) void {
+    const line_height = 24;
 
-pub fn glfw_error_callback(err: c_int, description: [*c]const u8) callconv(.C) void {
-    std.debug.print("GLFW Error: {} {s}\n", .{ err, description });
+    for (editor.lines.items, 0..) |line, idx| {
+        const y = height - (idx + 1) * line_height;
+        render.draw_text(line.items, 0, @intCast(y), line_height);
+    }
 }
 
 pub fn main() !void {
-    const window_width = 1280;
-    const window_height = 720;
+    io.init();
+    defer io.deinit();
 
-    _ = gl.glfwSetErrorCallback(glfw_error_callback);
+    var render = try Renderer.init();
+    defer render.deinit();
 
-    const succes = gl.glfwInit();
-    if (succes == 0) {
-        return error.GlfwInitError;
-    }
-    defer gl.glfwTerminate();
+    var editor = Editor.init();
 
-    const wind = gl.glfwCreateWindow(window_width, window_height, "WKP", null, null);
-    if (wind == null) {
-        return error.GlfwCreateWindowError;
-    }
-    defer gl.glfwDestroyWindow(wind);
+    while (!io.window_should_close()) {
+        render.start_frame(io.window_width, io.window_height);
 
-    gl.glfwMakeContextCurrent(wind);
+        draw_editor(&render, editor, io.window_width, io.window_height);
 
-    var rend = try render.init();
+        if (io.text_input_last_frame.items.len > 0) {
+            editor.write_text(io.text_input_last_frame.items);
+        }
 
-    while (gl.glfwWindowShouldClose(wind) == 0) {
-        rend.start_frame(window_width, window_height);
-        rend.draw_text("Hello, World!", 100, 100, 24);
-        rend.draw_text("Hello, Second!ggg", 100, 132, 24);
+        if (io.released_last_frame[io.gl.GLFW_KEY_ENTER]) {
+            editor.add_new_line();
+        }
 
-        gl.glfwSwapBuffers(wind);
-        gl.glfwPollEvents();
+        io.update();
     }
 }

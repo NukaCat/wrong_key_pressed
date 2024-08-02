@@ -57,13 +57,13 @@ pub fn init() FontManager {
 }
 
 pub fn deinit(self: FontManager) void {
-    ft.FT_Done_Face(self.face);
-    ft.FT_Done_FreeType(self.ft_lib);
+    _ = ft.FT_Done_Face(self.face);
+    _ = ft.FT_Done_FreeType(self.ft_lib);
 
-    var iter = self.glyphs.valueIterator();
-    while (iter.next()) |item| {
-        gl.glDeleteTextures(1, item);
-    }
+    // var iter = self.glyphs.valueIterator();
+    // while (iter.next()) |item| {
+    // gl.glDeleteTextures(1, item.texture);
+    // }
 }
 
 pub fn get_glyph(self: *FontManager, char_code: u32, pixel_height: u32) Glyph {
