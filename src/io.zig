@@ -14,6 +14,7 @@ pub const window_height = 720;
 
 pub var pressed_keys: [key_count]bool = [_]bool{false} ** key_count;
 pub var released_last_frame: [key_count]bool = [_]bool{false} ** key_count;
+pub var pressed_last_frame: [key_count]bool = [_]bool{false} ** key_count;
 pub var text_input_last_frame: std.ArrayList(u8) = undefined;
 
 var main_window: ?*gl.GLFWwindow = null;
@@ -22,6 +23,7 @@ pub fn glfw_key_callback(_: ?*gl.GLFWwindow, key: c_int, _: c_int, action: c_int
     const key_idx: usize = @intCast(key);
     if (action == gl.GLFW_PRESS) {
         pressed_keys[key_idx] = true;
+        pressed_last_frame[key_idx] = true;
     } else if (action == gl.GLFW_RELEASE) {
         pressed_keys[key_idx] = false;
     }
@@ -72,6 +74,7 @@ pub fn deinit() void {
 pub fn update() void {
     text_input_last_frame.clearAndFree();
     released_last_frame = [_]bool{false} ** key_count;
+    pressed_last_frame = [_]bool{false} ** key_count;
     gl.glfwSwapBuffers(main_window);
     gl.glfwPollEvents();
 }

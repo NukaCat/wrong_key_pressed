@@ -42,7 +42,7 @@ pub fn main() !void {
             editor.write_text(io.text_input_last_frame.items);
         }
 
-        if (io.released_last_frame[io.gl.GLFW_KEY_ENTER]) {
+        if (io.pressed_last_frame[io.gl.GLFW_KEY_ENTER]) {
             editor.add_new_line();
         }
 
