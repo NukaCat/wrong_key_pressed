@@ -12,11 +12,11 @@ const Render = @This();
 
 const check_gl_err = common.check_gl_err;
 
-shader_program: u32 = undefined,
-rect_vao: u32 = undefined,
-font_mng: FontMng = undefined,
-cur_width: u32 = 0,
-cur_height: u32 = 0,
+var shader_program: u32 = undefined;
+var rect_vao: u32 = undefined;
+var font_mng: FontMng = undefined;
+var cur_width: u32 = 0;
+var cur_height: u32 = 0;
 
 fn compile_shader(shader_str: []const u8, gl_type: gl.GLenum) !u32 {
     const shader = gl.__glewCreateShader.?(gl_type);
@@ -73,7 +73,7 @@ fn generate_rect_vao() !u32 {
     return vao;
 }
 
-pub fn init() !Render {
+pub fn init() !void {
     const err = gl.glewInit();
     if (err != gl.GLEW_OK) {
         const err_str = gl.glewGetErrorString(err);
@@ -88,7 +88,7 @@ pub fn init() !Render {
     const vertex_shader = try compile_shader(vertex_shader_str, gl.GL_VERTEX_SHADER);
     const fragment_shader = try compile_shader(fragment_shader_str, gl.GL_FRAGMENT_SHADER);
 
-    const shader_program = gl.__glewCreateProgram.?();
+    shader_program = gl.__glewCreateProgram.?();
 
     gl.__glewAttachShader.?(shader_program, vertex_shader);
     gl.__glewAttachShader.?(shader_program, fragment_shader);
@@ -103,34 +103,30 @@ pub fn init() !Render {
         return error.GlShaderCompilationError;
     }
 
-    const rect_vao = try generate_rect_vao();
+    rect_vao = try generate_rect_vao();
 
-    return Render{
-        .shader_program = shader_program,
-        .rect_vao = rect_vao,
-        .font_mng = FontMng.init(),
-    };
+    font_mng = FontMng.init();
 }
 
-pub fn deinit(self: *Render) void {
-    self.font_mng.deinit();
+pub fn deinit() void {
+    font_mng.deinit();
 }
 
-pub fn start_frame(self: *Render, width: u32, height: u32) void {
+pub fn start_frame(width: u32, height: u32) void {
     gl.glViewport(0, 0, @intCast(width), @intCast(height));
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT);
-    self.cur_width = width;
-    self.cur_height = height;
+    cur_width = width;
+    cur_height = height;
 }
 
-pub fn draw_text(self: *Render, text: []const u8, x: i32, y: i32, height: i32) void {
+pub fn draw_text(text: []const u8, x: i32, y: i32, height: i32) void {
     var offset_x = x;
 
-    const scale_x: f32 = 2.0 / @as(f32, @floatFromInt(self.cur_width));
-    const scale_y: f32 = 2.0 / @as(f32, @floatFromInt(self.cur_height));
+    const scale_x: f32 = 2.0 / @as(f32, @floatFromInt(cur_width));
+    const scale_y: f32 = 2.0 / @as(f32, @floatFromInt(cur_height));
 
     for (text) |char| {
-        const glyph = self.font_mng.get_glyph(char, @intCast(height));
+        const glyph = font_mng.get_glyph(char, @intCast(height));
 
         const glyph_x: f32 = @floatFromInt(offset_x + glyph.tex_left);
         const glyph_y: f32 = @floatFromInt(y + glyph.tex_top - @as(i32, @intCast(glyph.tex_height)));
@@ -147,17 +143,17 @@ pub fn draw_text(self: *Render, text: []const u8, x: i32, y: i32, height: i32) v
 
         offset_x += @intCast(glyph.advance);
 
-        gl.__glewUseProgram.?(self.shader_program);
+        gl.__glewUseProgram.?(shader_program);
 
         gl.glBindTexture(gl.GL_TEXTURE_2D, glyph.texture);
 
-        const transform_loc = gl.__glewGetUniformLocation.?(self.shader_program, "transform");
+        const transform_loc = gl.__glewGetUniformLocation.?(shader_program, "transform");
         gl.__glewUniformMatrix4fv.?(transform_loc, 1, gl.GL_TRUE, @ptrCast(&transform));
 
         // const color_loc = gl.__glewGetUniformLocation.?(self.shader_program, "color");
         // gl.__glewUniform4fv.?(color_loc, 1, @ptrCast(&color));
 
-        gl.__glewBindVertexArray.?(self.rect_vao);
+        gl.__glewBindVertexArray.?(rect_vao);
         gl.glDrawArrays(gl.GL_TRIANGLES, 0, 6);
     }
 
